@@ -17,6 +17,14 @@ function App() {
   );
   const [activeScenarioId, setActiveScenarioId] = useState(defaultScenarioId);
   const [scenarioDraft, setScenarioDraft] = useState<ScenarioData>(() => cloneScenario(initialScenarioMap[defaultScenarioId]));
+import { defaultScenarioId, industries, scenarioMap } from './data/mockScenarios';
+import type { RunStatus, ScenarioData } from './types/scenario';
+
+const cloneScenario = (scenarioId: string): ScenarioData => structuredClone(scenarioMap[scenarioId]);
+
+function App() {
+  const [activeScenarioId, setActiveScenarioId] = useState(defaultScenarioId);
+  const [scenarioDraft, setScenarioDraft] = useState<ScenarioData>(() => cloneScenario(defaultScenarioId));
   const [expandedIndustries, setExpandedIndustries] = useState<string[]>(['finance', 'biomed']);
   const [status, setStatus] = useState<RunStatus>('未运行');
   const [logs, setLogs] = useState<string[]>([]);
@@ -34,6 +42,16 @@ function App() {
 
   const resetCurrent = () => {
     setScenarioDraft(cloneScenario(savedScenarioMap[activeScenarioId]));
+    () => JSON.stringify(scenarioDraft.cells) !== JSON.stringify(scenarioMap[activeScenarioId].cells),
+    [scenarioDraft.cells, activeScenarioId],
+  );
+
+  const saveCurrent = () => {
+    scenarioMap[activeScenarioId] = structuredClone(scenarioDraft);
+  };
+
+  const resetCurrent = () => {
+    setScenarioDraft(cloneScenario(activeScenarioId));
     setStatus('未运行');
     setLogs([]);
   };
@@ -41,6 +59,7 @@ function App() {
   const switchScenario = (scenarioId: string) => {
     setActiveScenarioId(scenarioId);
     setScenarioDraft(cloneScenario(savedScenarioMap[scenarioId]));
+    setScenarioDraft(cloneScenario(scenarioId));
     setStatus('未运行');
     setLogs([]);
   };
@@ -78,6 +97,7 @@ function App() {
         <IndustryTree
           industries={industries}
           scenarioMap={savedScenarioMap}
+          scenarioMap={scenarioMap}
           activeScenarioId={activeScenarioId}
           expandedIndustries={expandedIndustries}
           onToggleIndustry={(id) =>
@@ -112,6 +132,7 @@ function App() {
       <UnsavedChangesDialog
         open={Boolean(pendingScenarioId)}
         targetScenarioName={pendingScenarioId ? savedScenarioMap[pendingScenarioId].name : ''}
+        targetScenarioName={pendingScenarioId ? scenarioMap[pendingScenarioId].name : ''}
         onStay={() => setPendingScenarioId(null)}
         onSaveAndSwitch={() => {
           saveCurrent();
