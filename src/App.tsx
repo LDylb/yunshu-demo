@@ -6,6 +6,17 @@ import { NotebookEditor } from './components/NotebookEditor';
 import { ExecutionConfirmModal } from './components/ExecutionConfirmModal';
 import { RunStatusBar } from './components/RunStatusBar';
 import { UnsavedChangesDialog } from './components/UnsavedChangesDialog';
+import { defaultScenarioId, industries, scenarioMap as initialScenarioMap } from './data/mockScenarios';
+import type { RunStatus, ScenarioData } from './types/scenario';
+
+const cloneScenario = (scenario: ScenarioData): ScenarioData => structuredClone(scenario);
+
+function App() {
+  const [savedScenarioMap, setSavedScenarioMap] = useState<Record<string, ScenarioData>>(() =>
+    structuredClone(initialScenarioMap),
+  );
+  const [activeScenarioId, setActiveScenarioId] = useState(defaultScenarioId);
+  const [scenarioDraft, setScenarioDraft] = useState<ScenarioData>(() => cloneScenario(initialScenarioMap[defaultScenarioId]));
 import { defaultScenarioId, industries, scenarioMap } from './data/mockScenarios';
 import type { RunStatus, ScenarioData } from './types/scenario';
 
@@ -21,6 +32,16 @@ function App() {
   const [pendingScenarioId, setPendingScenarioId] = useState<string | null>(null);
 
   const hasUnsaved = useMemo(
+    () => JSON.stringify(scenarioDraft.cells) !== JSON.stringify(savedScenarioMap[activeScenarioId].cells),
+    [scenarioDraft.cells, activeScenarioId, savedScenarioMap],
+  );
+
+  const saveCurrent = () => {
+    setSavedScenarioMap((prev) => ({ ...prev, [activeScenarioId]: cloneScenario(scenarioDraft) }));
+  };
+
+  const resetCurrent = () => {
+    setScenarioDraft(cloneScenario(savedScenarioMap[activeScenarioId]));
     () => JSON.stringify(scenarioDraft.cells) !== JSON.stringify(scenarioMap[activeScenarioId].cells),
     [scenarioDraft.cells, activeScenarioId],
   );
@@ -37,6 +58,7 @@ function App() {
 
   const switchScenario = (scenarioId: string) => {
     setActiveScenarioId(scenarioId);
+    setScenarioDraft(cloneScenario(savedScenarioMap[scenarioId]));
     setScenarioDraft(cloneScenario(scenarioId));
     setStatus('未运行');
     setLogs([]);
@@ -74,6 +96,7 @@ function App() {
       <div className="flex min-h-0 flex-1">
         <IndustryTree
           industries={industries}
+          scenarioMap={savedScenarioMap}
           scenarioMap={scenarioMap}
           activeScenarioId={activeScenarioId}
           expandedIndustries={expandedIndustries}
@@ -108,6 +131,7 @@ function App() {
 
       <UnsavedChangesDialog
         open={Boolean(pendingScenarioId)}
+        targetScenarioName={pendingScenarioId ? savedScenarioMap[pendingScenarioId].name : ''}
         targetScenarioName={pendingScenarioId ? scenarioMap[pendingScenarioId].name : ''}
         onStay={() => setPendingScenarioId(null)}
         onSaveAndSwitch={() => {

@@ -9,6 +9,12 @@ npm install
 npm run dev
 ```
 
+生产预览：
+
+```bash
+npm run preview
+```
+
 默认访问：`http://localhost:5173/`
 
 ## 页面入口路由
