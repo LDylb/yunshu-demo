@@ -6,5 +6,6 @@ const isGitHubPagesDeploy = process.env.GITHUB_ACTIONS === 'true' || process.env
 
 export default defineConfig({
   base: isGitHubPagesDeploy && repoName ? `/${repoName}/` : '/',
+export default defineConfig({
   plugins: [react()],
 });
